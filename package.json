@@ -36,9 +36,5 @@
         "jimp": "^0.22.12",
         "nodemon": "^3.1.2",
         "png2icons": "^2.0.1"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/luuxis/Selvania-Launcher.git"
     }
 }
