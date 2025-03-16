@@ -1,10 +1,4 @@
-/**
- * @author Luuxis
- * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
- */
-
-import { changePanel, accountSelect, database, Slider, config, setStatus, popup, appdata, setBackground } from '../utils.js'
-const { ipcRenderer } = require('electron');
+import { changePanel, database, Slider, config, setStatus, appdata } from '../utils.js'
 const os = require('os');
 
 class Settings {
@@ -13,7 +7,6 @@ class Settings {
         this.config = config;
         this.db = new database();
         this.navBTN()
-        this.accounts()
         this.ram()
         this.javaPath()
         this.resolution()
@@ -30,11 +23,33 @@ class Settings {
 
                 if (id == 'save') {
                     if (activeSettingsBTN) activeSettingsBTN.classList.toggle('active-settings-BTN');
-                    document.querySelector('#account').classList.add('active-settings-BTN');
+                    document.querySelector('#java').classList.add('active-settings-BTN');
 
                     if (activeContainerSettings) activeContainerSettings.classList.toggle('active-container-settings');
-                    document.querySelector(`#account-tab`).classList.add('active-container-settings');
+                    document.querySelector(`#java-tab`).classList.add('active-container-settings');
                     return changePanel('home')
+                }
+
+                if (id == "disconnect") {
+                    this.db.deleteData('accounts', 1)
+
+                    if (activeSettingsBTN) activeSettingsBTN.classList.toggle('active-settings-BTN');
+                    document.querySelector('#java').classList.add('active-settings-BTN');
+
+                    if (activeContainerSettings) activeContainerSettings.classList.toggle('active-container-settings');
+                    document.querySelector(`#java-tab`).classList.add('active-container-settings');
+
+                    let configClient = this.db.readData('configClient');
+
+                    if (configClient.account_selected == 1) {
+                        let allAccounts = this.db.readAllData('accounts');
+                        configClient.account_selected = allAccounts[0].ID
+                        let newInstanceSelect = this.setInstance(allAccounts[0]);
+                        configClient.instance_selct = newInstanceSelect.instance_selct
+                        return this.db.updateData('configClient', configClient);
+                    }
+
+                    return changePanel('login');
                 }
 
                 if (activeSettingsBTN) activeSettingsBTN.classList.toggle('active-settings-BTN');
@@ -42,62 +57,6 @@ class Settings {
 
                 if (activeContainerSettings) activeContainerSettings.classList.toggle('active-container-settings');
                 document.querySelector(`#${id}-tab`).classList.add('active-container-settings');
-            }
-        })
-    }
-
-    accounts() {
-        document.querySelector('.accounts-list').addEventListener('click', async e => {
-            let popupAccount = new popup()
-            try {
-                let id = e.target.id
-                if (e.target.classList.contains('account')) {
-                    popupAccount.openPopup({
-                        title: 'Connexion',
-                        content: 'Veuillez patienter...',
-                        color: 'var(--color)'
-                    })
-
-                    if (id == 'add') {
-                        document.querySelector('.cancel-home').style.display = 'inline'
-                        return changePanel('login')
-                    }
-
-                    let account = await this.db.readData('accounts', id);
-                    let configClient = await this.setInstance(account);
-                    await accountSelect(account);
-                    configClient.account_selected = account.ID;
-                    return await this.db.updateData('configClient', configClient);
-                }
-
-                if (e.target.classList.contains("delete-profile")) {
-                    popupAccount.openPopup({
-                        title: 'Connexion',
-                        content: 'Veuillez patienter...',
-                        color: 'var(--color)'
-                    })
-                    await this.db.deleteData('accounts', id);
-                    let deleteProfile = document.getElementById(`${id}`);
-                    let accountListElement = document.querySelector('.accounts-list');
-                    accountListElement.removeChild(deleteProfile);
-
-                    if (accountListElement.children.length == 1) return changePanel('login');
-
-                    let configClient = await this.db.readData('configClient');
-
-                    if (configClient.account_selected == id) {
-                        let allAccounts = await this.db.readAllData('accounts');
-                        configClient.account_selected = allAccounts[0].ID
-                        accountSelect(allAccounts[0]);
-                        let newInstanceSelect = await this.setInstance(allAccounts[0]);
-                        configClient.instance_selct = newInstanceSelect.instance_selct
-                        return await this.db.updateData('configClient', configClient);
-                    }
-                }
-            } catch (err) {
-                console.error(err)
-            } finally {
-                popupAccount.closePopup();
             }
         })
     }
@@ -249,43 +208,6 @@ class Settings {
             maxDownloadFilesInput.value = 5
             configClient.launcher_config.download_multi = 5;
             await this.db.updateData('configClient', configClient);
-        })
-
-        let themeBox = document.querySelector(".theme-box");
-        let theme = configClient?.launcher_config?.theme || "auto";
-
-        if (theme == "auto") {
-            document.querySelector('.theme-btn-auto').classList.add('active-theme');
-        } else if (theme == "dark") {
-            document.querySelector('.theme-btn-sombre').classList.add('active-theme');
-        } else if (theme == "light") {
-            document.querySelector('.theme-btn-clair').classList.add('active-theme');
-        }
-
-        themeBox.addEventListener("click", async e => {
-            if (e.target.classList.contains('theme-btn')) {
-                let activeTheme = document.querySelector('.active-theme');
-                if (e.target.classList.contains('active-theme')) return
-                activeTheme?.classList.remove('active-theme');
-
-                if (e.target.classList.contains('theme-btn-auto')) {
-                    setBackground();
-                    theme = "auto";
-                    e.target.classList.add('active-theme');
-                } else if (e.target.classList.contains('theme-btn-sombre')) {
-                    setBackground(true);
-                    theme = "dark";
-                    e.target.classList.add('active-theme');
-                } else if (e.target.classList.contains('theme-btn-clair')) {
-                    setBackground(false);
-                    theme = "light";
-                    e.target.classList.add('active-theme');
-                }
-
-                let configClient = await this.db.readData('configClient')
-                configClient.launcher_config.theme = theme;
-                await this.db.updateData('configClient', configClient);
-            }
         })
 
         let closeBox = document.querySelector(".close-box");

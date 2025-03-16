@@ -1,9 +1,4 @@
-/**
- * @author Luuxis
- * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
- */
-
-const { app, ipcMain, nativeTheme } = require('electron');
+const { app, ipcMain } = require('electron');
 const { Microsoft } = require('minecraft-java-core');
 const { autoUpdater } = require('electron-updater')
 
@@ -49,25 +44,11 @@ ipcMain.on('update-window-progress-load', () => UpdateWindow.getWindow().setProg
 ipcMain.handle('path-user-data', () => app.getPath('userData'))
 ipcMain.handle('appData', e => app.getPath('appData'))
 
-ipcMain.on('main-window-maximize', () => {
-    if (MainWindow.getWindow().isMaximized()) {
-        MainWindow.getWindow().unmaximize();
-    } else {
-        MainWindow.getWindow().maximize();
-    }
-})
-
 ipcMain.on('main-window-hide', () => MainWindow.getWindow().hide())
 ipcMain.on('main-window-show', () => MainWindow.getWindow().show())
 
 ipcMain.handle('Microsoft-window', async (_, client_id) => {
     return await new Microsoft(client_id).getAuth();
-})
-
-ipcMain.handle('is-dark-theme', (_, theme) => {
-    if (theme === 'dark') return true
-    if (theme === 'light') return false
-    return nativeTheme.shouldUseDarkColors;
 })
 
 app.on('window-all-closed', () => app.quit());

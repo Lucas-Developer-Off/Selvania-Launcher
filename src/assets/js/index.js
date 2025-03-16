@@ -1,14 +1,8 @@
-/**
- * @author Luuxis
- * @license CC-BY-NC 4.0 - https://creativecommons.org/licenses/by-nc/4.0
- */
-
 const { ipcRenderer, shell } = require('electron');
 const pkg = require('../package.json');
 const os = require('os');
 import { config, database } from './utils.js';
 const nodeFetch = require("node-fetch");
-
 
 class Splash {
     constructor() {
@@ -20,9 +14,6 @@ class Splash {
         document.addEventListener('DOMContentLoaded', async () => {
             let databaseLauncher = new database();
             let configClient = await databaseLauncher.readData('configClient');
-            let theme = configClient?.launcher_config?.theme || "auto"
-            let isDarkTheme = await ipcRenderer.invoke('is-dark-theme', theme).then(res => res)
-            document.body.className = isDarkTheme ? 'dark global' : 'light global';
             if (process.platform == 'win32') ipcRenderer.send('update-window-progress-load')
             this.startAnimation()
         });
@@ -30,13 +21,11 @@ class Splash {
 
     async startAnimation() {
         let splashes = [
-            { "message": "Je... vie...", "author": "Luuxis" },
-            { "message": "Salut je suis du code.", "author": "Luuxis" },
-            { "message": "Linux n'est pas un os, mais un kernel.", "author": "Luuxis" }
+            { "message": " ", "author": " " },
         ];
         let splash = splashes[Math.floor(Math.random() * splashes.length)];
         this.splashMessage.textContent = splash.message;
-        this.splashAuthor.children[0].textContent = "@" + splash.author;
+        this.splashAuthor.children[0].textContent = splash.author;
         await sleep(100);
         document.querySelector("#splash").style.display = "block";
         await sleep(500);
@@ -54,7 +43,7 @@ class Splash {
         this.setStatus(`Recherche de mise à jour...`);
 
         ipcRenderer.invoke('update-app').then().catch(err => {
-            return this.shutdown(`erreur lors de la recherche de mise à jour :<br>${err.message}`);
+            return this.shutdown(`Erreur lors de la recherche de mise à jour :<br>${err.message}`);
         });
 
         ipcRenderer.on('updateAvailable', () => {
